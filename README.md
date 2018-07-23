@@ -55,6 +55,7 @@ while True:
     ep_r += r
     if t:
         print('Episode reward: ', ep_r)
+        break
 ```
 
 ### Available Environments
