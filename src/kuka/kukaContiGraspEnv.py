@@ -62,6 +62,7 @@ class KukaContiGraspEnv(gym.Env):
     p.loadURDF(os.path.join(self._urdfRoot,"plane.urdf"),[0,0,-1])
     
     p.loadURDF(os.path.join(self._urdfRoot,"table/table.urdf"), 0.5000000,0.00000,-.820000,0.000000,0.000000,0.0,1.0)
+    p.loadURDF(os.path.join(self._urdfRoot,"tray/tray.urdf"), 0.640000,0.075000,-0.190000,0.000000,0.000000,1.000000,0.000000)
     
     xpos = 0.5 +0.05*random.random()
     ypos = 0 +0.05*random.random()
@@ -210,7 +211,7 @@ class KukaContiGraspEnv(gym.Env):
   def _reward(self):
     
     #rewards is height of target object
-    blockPos,blockOrn=p.getBasePositionAndOrientation(self.blockUid)
+    blockPos,_=p.getBasePositionAndOrientation(self.blockUid)
 
     reward = 0.0
 
@@ -225,7 +226,7 @@ class KukaContiGraspEnv(gym.Env):
 
   def internalReward(self):
     #rewards is the distance between gripper and target object
-    closestPoints = p.getClosestPoints(self.blockUid,self._kuka.kukaUid,1000)
+    closestPoints = p.getClosestPoints(self.blockUid, self._kuka.kukaUid, 1000, linkIndexB=self._kuka.kukaEndEffectorIndex)
     reward = -1000
     numPt = len(closestPoints)
     if (numPt>0):

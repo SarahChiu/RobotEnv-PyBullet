@@ -26,10 +26,11 @@ cd Robotics_Env_in_PyBullet/src
 pip install -e .
 ```
 
-3. Add the path of the installed package to *PYTHONPATH*.
+3. Add the following lines to your bashrc.
 
 ```bash
-export PYTHONPATH=/your_path_to_this_project/src
+export PYTHONPATH=$PYTHONPATH:your_path_to_this_project/src
+export URDF_DATA=your_path_to_this_project/src/data
 ```
 
 ### Usage

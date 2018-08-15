@@ -51,7 +51,6 @@ class Kuka:
       p.resetJointState(self.kukaUid,jointIndex,self.jointPositions[jointIndex])
       p.setJointMotorControl2(self.kukaUid,jointIndex,p.POSITION_CONTROL,targetPosition=self.jointPositions[jointIndex],force=self.maxForce)
     
-    self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath,"tray/tray.urdf"), 0.640000,0.075000,-0.190000,0.000000,0.000000,1.000000,0.000000)
     linkState = p.getLinkState(self.kukaUid,self.kukaEndEffectorIndex)
     self.endEffectorPos = np.array(linkState[0])
     jointState = p.getJointState(self.kukaUid, 7)

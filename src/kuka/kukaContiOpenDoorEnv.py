@@ -1,4 +1,4 @@
-import os, inspect
+import os,  inspect
 #currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 #parentdir = os.path.dirname(os.path.dirname(currentdir))
 #os.sys.path.insert(0,parentdir)
@@ -14,7 +14,7 @@ from . import kuka
 import random
 import pybullet_data
 
-class KukaContiStackInHandEnv(gym.Env):
+class KukaContiOpenDoorEnv(gym.Env):
   metadata = {
       'render.modes': ['human', 'rgb_array'],
       'video.frames_per_second' : 50
@@ -33,7 +33,7 @@ class KukaContiStackInHandEnv(gym.Env):
     self._envStepCounter = 0
     self._renders = renders
     self.terminated = 0
-    self.gripper_closed = 1
+    self.gripper_closed = 0
     self._p = p
     if self._renders:
       cid = p.connect(p.SHARED_MEMORY)
@@ -55,46 +55,22 @@ class KukaContiStackInHandEnv(gym.Env):
 
   def reset(self):
     self.terminated = 0
-    self.gripper_closed = 1
+    self.gripper_closed = 0
     p.resetSimulation()
     p.setPhysicsEngineParameter(numSolverIterations=150)
     p.setTimeStep(self._timeStep)
     p.loadURDF(os.path.join(self._urdfRoot,"plane.urdf"),[0,0,-1])
     
     p.loadURDF(os.path.join(self._urdfRoot,"table/table.urdf"), 0.5000000,0.00000,-.820000,0.000000,0.000000,0.0,1.0)
-    p.loadURDF(os.path.join(self._urdfRoot,"tray/tray.urdf"), 0.640000,0.075000,-0.190000,0.000000,0.000000,1.000000,0.000000)
-
-    #Load a block for the gripper to grasp in hand
-    tempJPos=[ 0.006418, 1.134464, -0.011401, -1.589317, 0.005379, 0.436332, -0.006539, 0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
-    xpos1 = 0.525
-    ypos1 = 0.025
-    ang1 = 1.570796
-    orn1 = p.getQuaternionFromEuler([0,0,ang1])
+    #TODO
+    doorOrientation = p.getQuaternionFromEuler([0,0,1.570796])
+    xpos = 0.9 + 0.05 * random.random()
+    ypos = -0.25 + 0.05 * random.random()
+    self.doorUid = p.loadURDF(os.path.join(os.environ['URDF_DATA'],"door.urdf"), [xpos, ypos, 0.0], doorOrientation)
     
     p.setGravity(0,0,-10)
-    self._kuka = kuka.Kuka(gripperInitOrn=[orn1[0],orn1[1],orn1[2],orn1[3]], urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
-    self._kuka.setGoodInitStateEE(tempJPos, self._renders)
-    self.block1Uid =p.loadURDF(os.path.join(self._urdfRoot,"cube_small.urdf"), xpos1,ypos1,-0.1,orn1[0],orn1[1],orn1[2],orn1[3])
-
-    fingerAngle = 0.3
-      
-    for i in range (1000):
-        graspAction = [0,0,0,0,fingerAngle]
-        self._kuka.applyAction(graspAction)
-        p.stepSimulation()
-        fingerAngle = fingerAngle-(0.3/100.)
-        if (fingerAngle<0):
-            fingerAngle=0
-
-    tempJPosDiff = [0, -0.808546, 0, 0, 0, 0.788618, 0]
-    self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
-
-    xpos2 = 0.5 +0.05*random.random()
-    ypos2 = 0 +0.05*random.random()
-    ang2 = 3.1415925438*random.random()
-    orn2 = p.getQuaternionFromEuler([0,0,ang2])
-    self.block2Uid =p.loadURDF(os.path.join(self._urdfRoot,"cube_small.urdf"), xpos2,ypos2,-0.1,orn2[0],orn2[1],orn2[2],orn2[3])
-
+    orn = p.getQuaternionFromEuler([0,0,0])
+    self._kuka = kuka.Kuka(gripperInitOrn=[orn[0],orn[1],orn[2],orn[3]], urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._envStepCounter = 0
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
@@ -112,45 +88,57 @@ class KukaContiStackInHandEnv(gym.Env):
      eeState  = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)
      endEffectorPos = eeState[0]
      endEffectorOrn = eeState[1]
-     blockPos,blockOrn = p.getBasePositionAndOrientation(self.block2Uid)
+
+     #TODO
+     doorKnobState = p.getLinkState(self.doorUid, 2)
+     doorKnobPos,doorKnobOrn = doorKnobState[0], doorKnobState[1]
 
      invEEPos,invEEOrn = p.invertTransform(endEffectorPos,endEffectorOrn)
-     blockPosInEE,blockOrnInEE = p.multiplyTransforms(invEEPos,invEEOrn,blockPos,blockOrn)
-     blockEulerInEE = p.getEulerFromQuaternion(blockOrnInEE)
-     self._observation.extend(list(blockPosInEE))
-     self._observation.extend(list(blockEulerInEE))
+     doorKnobPosInEE,doorKnobOrnInEE = p.multiplyTransforms(invEEPos,invEEOrn,doorKnobPos,doorKnobOrn)
+     doorKnobEulerInEE = p.getEulerFromQuaternion(doorKnobOrnInEE)
+     self._observation.extend(list(doorKnobPosInEE))
+     self._observation.extend(list(doorKnobEulerInEE))
 
      return self._observation
 
+  #TODO
   def getGoodInitState(self):
     self.reset()
-    goodJointPos=[ 0.006418, 0.872665, -0.011401, -1.589317, 0.005379, 0.698132, -0.006539, \
-      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    goodJointPos=[ 0.610865, 0.523599, -0.011401, -1.308997, 0.005379, 0.000000, -0.006539, \
+            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
     self._kuka.initState(goodJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation), goodJointPos[0:7]
 
+  #TODO
   def getMidInitState(self):
     self.reset()
-    midJointPos=[ 0.006418, 0.785398, -0.011401, -1.589317, 0.005379, 0.785398, -0.006539, \
-      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    midJointPos=[ 0.308642, 0.468392, -0.011401, -1.449157, 0.005379, 0.568842, -0.006539, \
+            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
     self._kuka.initState(midJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)
 
-  def setGoodInitState(self, ob, jointPoses):
+  #TODO
+  def getGoodMidInitState(self):
+    self.reset()
+    goodMidJointPos=[ 0.459754, 0.495996, -0.011401, -1.404077, 0.005379, 0.284421, -0.006539, \
+      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    self._kuka.initState(goodMidJointPos, self._renders)
+    self._observation = self.getExtendedObservation()
+
+    return np.array(self._observation)
+
+  #TODO
+  def setGoodInitState(self, ob, jointPoses, door): #door: [pos, orn, joint angle]
     self.reset()
     self._kuka.setGoodInitStateEE(jointPoses, self._renders)
-    #Get pos and orn for the gripper
-    linkState = p.getLinkState(self._kuka.kukaUid, self._kuka.kukaEndEffectorIndex)
-    gripperPos = list(linkState[0])
-    gripperOrn = list(linkState[1])
-    #Set pos and orn for the block
-    blockOrnInEE = p.getQuaternionFromEuler(ob[16:19])
-    blockPos, blockOrn = p.multiplyTransforms(gripperPos, gripperOrn, ob[13:16], blockOrnInEE)
-    p.resetBasePositionAndOrientation(self.block2Uid, blockPos, blockOrn)
+    #Set pos, orn, and joint angle for the door
+    p.resetBasePositionAndOrientation(self.doorUid, door[0], door[1])
+    p.resetJointState(self.doorUid, 1, door[2])
+    p.setJointMotorControl2(self.doorUid, 1, p.POSITION_CONTROL, targetPosition=door[2], force=200.)
 
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
@@ -162,6 +150,13 @@ class KukaContiStackInHandEnv(gym.Env):
         jointPoses.append(list(state)[0])
 
     return jointPoses
+
+  #TODO
+  def getCurrentDoorInfo(self):
+      doorPos, doorOrn = p.getBasePositionAndOrientation(self.doorUid)
+      doorJointPos = p.getJointState(self.doorUid, 1)[0]
+
+      return [doorPos, doorOrn, doorJointPos]
 
   def step(self, action):
     return self.stepPosDiff(action)
@@ -193,45 +188,62 @@ class KukaContiStackInHandEnv(gym.Env):
   def _render(self, mode='human', close=False):
       return
 
+  #TODO
   def _termination(self):
     state = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)
-    actualEndEffectorPos = state[0]
+    actualEndEffectorPos = list(state[0])
+    actualEndEffectorOrn = list(state[1])
+    doorPos, _ = p.getBasePositionAndOrientation(self.doorUid)
  
     if (self.terminated or self._envStepCounter > 10):
       self._observation = self.getExtendedObservation()
       return True
     
-    if (actualEndEffectorPos[2] <= 0.15):
+    if (abs(doorPos[0]-actualEndEffectorPos[0]) <= 0.30):
       self.terminated = 1
       
-      #print("opening gripper")
-      self.gripper_closed = 0
-      fingerAngle = 0
+      #print("closing gripper, attempting holding door knob")
+      self.gripper_closed = 1
+      #start grasp and terminate
+      fingerAngle = 0.3
       
       for i in range (1000):
         p.setJointMotorControl2(self._kuka.kukaUid, 8, p.POSITION_CONTROL, targetPosition=-fingerAngle, force=self._kuka.fingerAForce)
         p.setJointMotorControl2(self._kuka.kukaUid, 11, p.POSITION_CONTROL, targetPosition=fingerAngle, force=self._kuka.fingerBForce)
         p.setJointMotorControl2(self._kuka.kukaUid, 10, p.POSITION_CONTROL, targetPosition=0, force=self._kuka.fingerTipForce)
         p.setJointMotorControl2(self._kuka.kukaUid, 13, p.POSITION_CONTROL, targetPosition=0, force=self._kuka.fingerTipForce)
+
+        #pull the door
+        actualEndEffectorPos[0] -= 0.00025
+        actualEndEffectorPos[1] -= 0.00025
+        jPos = p.calculateInverseKinematics(self._kuka.kukaUid, self._kuka.kukaEndEffectorIndex, \
+                actualEndEffectorPos, actualEndEffectorOrn, \
+                self._kuka.ll, self._kuka.ul, self._kuka.jr, self._kuka.rp)
+        for j in range(self._kuka.kukaEndEffectorIndex+1):
+            p.setJointMotorControl2(bodyIndex=self._kuka.kukaUid, jointIndex=j, controlMode=p.POSITION_CONTROL, \
+                    targetPosition=jPos[j], targetVelocity=0, force=self._kuka.maxForce, positionGain=0.03, velocityGain=1)
+
         p.stepSimulation()
-        fingerAngle = fingerAngle+(0.03/100.)
-        if (fingerAngle>0.3):
-          fingerAngle=0.3
+        fingerAngle = fingerAngle-(0.3/100.)
+        if (fingerAngle<0):
+          fingerAngle=0
         
       self._observation = self.getExtendedObservation()
       return True
 
     return False
   
+  #TODO
   def _reward(self):
     
-    #rewards is height of target object
-    blockPos,_=p.getBasePositionAndOrientation(self.block1Uid)
+    #rewards is rotation of the door
+    doorJointPos = p.getJointState(self.doorUid, 1)[0]
+    print(doorJointPos)
 
     reward = 0.0
 
-    if (blockPos[2] > -0.125 and self.terminated and not self.gripper_closed):
-      #print("stacked a block!!!")
+    if (doorJointPos > 0.261799 and self.terminated and self.gripper_closed):
+      #print("open the door!!!")
       #print("self._envStepCounter")
       #print(self._envStepCounter)
       #reward = reward+1000
@@ -239,9 +251,11 @@ class KukaContiStackInHandEnv(gym.Env):
 
     return reward
 
+  #TODO
   def internalReward(self):
-    #rewards is the distance between block1 and block2
-    closestPoints = p.getClosestPoints(self.block1Uid,self.block2Uid,1000)
+    #rewards is the distance between gripper and door knob
+    closestPoints = p.getClosestPoints(self.doorUid, self._kuka.kukaUid, 1000, \
+            linkIndexA=2, linkIndexB=self._kuka.kukaEndEffectorIndex)
     reward = -1000
     numPt = len(closestPoints)
     if (numPt>0):
