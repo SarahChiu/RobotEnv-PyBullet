@@ -62,15 +62,19 @@ class KukaContiOpenDoorEnv(gym.Env):
     p.loadURDF(os.path.join(self._urdfRoot,"plane.urdf"),[0,0,-1])
     
     p.loadURDF(os.path.join(self._urdfRoot,"table/table.urdf"), 0.5000000,0.00000,-.820000,0.000000,0.000000,0.0,1.0)
-    #TODO
+    
     doorOrientation = p.getQuaternionFromEuler([0,0,1.570796])
     xpos = 0.9 + 0.05 * random.random()
     ypos = -0.25 + 0.05 * random.random()
     self.doorUid = p.loadURDF(os.path.join(os.environ['URDF_DATA'],"door.urdf"), [xpos, ypos, 0.0], doorOrientation)
-    
+
     p.setGravity(0,0,-10)
     orn = p.getQuaternionFromEuler([0,0,0])
-    self._kuka = kuka.Kuka(gripperInitOrn=[orn[0],orn[1],orn[2],orn[3]], urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
+    jInitPos = [0.006418, 0.413184, -0.011401, -1.589317, 0.005379, 1.137684, -0.006539, \
+            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200]
+    self._kuka = kuka.Kuka(baseInitPos=[-0.1,0.0,0.07], jointInitPos = jInitPos, gripperInitOrn=[orn[0],orn[1],orn[2],orn[3]], \
+            fingerAForce=60, fingerBForce=55, fingerTipForce=60, \
+            urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._envStepCounter = 0
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
@@ -89,7 +93,6 @@ class KukaContiOpenDoorEnv(gym.Env):
      endEffectorPos = eeState[0]
      endEffectorOrn = eeState[1]
 
-     #TODO
      doorKnobState = p.getLinkState(self.doorUid, 2)
      doorKnobPos,doorKnobOrn = doorKnobState[0], doorKnobState[1]
 
@@ -101,7 +104,6 @@ class KukaContiOpenDoorEnv(gym.Env):
 
      return self._observation
 
-  #TODO
   def getGoodInitState(self):
     self.reset()
     goodJointPos=[ 0.610865, 0.523599, -0.011401, -1.308997, 0.005379, 0.000000, -0.006539, \
@@ -111,7 +113,6 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     return np.array(self._observation), goodJointPos[0:7]
 
-  #TODO
   def getMidInitState(self):
     self.reset()
     midJointPos=[ 0.308642, 0.468392, -0.011401, -1.449157, 0.005379, 0.568842, -0.006539, \
@@ -121,7 +122,6 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     return np.array(self._observation)
 
-  #TODO
   def getGoodMidInitState(self):
     self.reset()
     goodMidJointPos=[ 0.459754, 0.495996, -0.011401, -1.404077, 0.005379, 0.284421, -0.006539, \
@@ -131,7 +131,6 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     return np.array(self._observation)
 
-  #TODO
   def setGoodInitState(self, ob, jointPoses, door): #door: [pos, orn, joint angle]
     self.reset()
     self._kuka.setGoodInitStateEE(jointPoses, self._renders)
@@ -151,7 +150,6 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     return jointPoses
 
-  #TODO
   def getCurrentDoorInfo(self):
       doorPos, doorOrn = p.getBasePositionAndOrientation(self.doorUid)
       doorJointPos = p.getJointState(self.doorUid, 1)[0]
@@ -188,7 +186,6 @@ class KukaContiOpenDoorEnv(gym.Env):
   def _render(self, mode='human', close=False):
       return
 
-  #TODO
   def _termination(self):
     state = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)
     actualEndEffectorPos = list(state[0])
@@ -199,7 +196,7 @@ class KukaContiOpenDoorEnv(gym.Env):
       self._observation = self.getExtendedObservation()
       return True
     
-    if (abs(doorPos[0]-actualEndEffectorPos[0]) <= 0.30):
+    if (abs(doorPos[0]-actualEndEffectorPos[0]) <= 0.32):
       self.terminated = 1
       
       #print("closing gripper, attempting holding door knob")
@@ -233,12 +230,10 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     return False
   
-  #TODO
   def _reward(self):
     
     #rewards is rotation of the door
     doorJointPos = p.getJointState(self.doorUid, 1)[0]
-    print(doorJointPos)
 
     reward = 0.0
 
@@ -251,7 +246,6 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     return reward
 
-  #TODO
   def internalReward(self):
     #rewards is the distance between gripper and door knob
     closestPoints = p.getClosestPoints(self.doorUid, self._kuka.kukaUid, 1000, \

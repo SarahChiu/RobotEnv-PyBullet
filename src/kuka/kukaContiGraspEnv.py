@@ -71,7 +71,10 @@ class KukaContiGraspEnv(gym.Env):
     self.blockUid =p.loadURDF(os.path.join(self._urdfRoot,"block.urdf"), xpos,ypos,-0.1,orn[0],orn[1],orn[2],orn[3])
 
     p.setGravity(0,0,-10)
-    self._kuka = kuka.Kuka(gripperInitOrn=[orn[0],orn[1],orn[2],orn[3]], urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
+    jInitPos = [0.006418, 0.413184, -0.011401, -1.589317, 0.005379, 1.137684, -0.006539, \
+            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200]
+    self._kuka = kuka.Kuka(baseInitPos=[-0.1,0.0,0.07], jointInitPos=jInitPos, gripperInitOrn=[orn[0],orn[1],orn[2],orn[3]], \
+            urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._envStepCounter = 0
     p.stepSimulation()
     self._observation = self.getExtendedObservation()

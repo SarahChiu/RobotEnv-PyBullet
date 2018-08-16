@@ -31,7 +31,7 @@ The action is to apply 7 joint angle variations to the current joint angles. The
 
 **Termination Condition**
 An episode will terminate if
-1. the end effector is lower than 0.15 and will try to release the object in hand, 
+1. the end effector is lower than 0.2 and will try to release the object in hand, 
 2. the step number is over 10 (the robot arm should try to stack the objects in 10 steps).
 
 ## KukaContiOpenDoorEnv
@@ -48,5 +48,5 @@ The action is to apply 7 joint angle variations to the current joint angles. The
 
 **Termination Condition**
 An episode will terminate if
-1. the x distance between the end effector and the door is smaller than 0.3, and the end effector will try to pull the door, 
+1. the x distance between the end effector and the door is smaller than 0.32, and the end effector will try to pull the door, 
 2. the step number is over 10 (the robot arm should try to open the door in 10 steps).

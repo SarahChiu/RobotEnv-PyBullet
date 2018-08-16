@@ -12,15 +12,19 @@ import time
 
 class Kuka:
 
-  def __init__(self, gripperInitOrn, urdfRootPath=pybullet_data.getDataPath(), timeStep=0.01): 
+  def __init__(self, baseInitPos, jointInitPos, gripperInitOrn, \
+          maxForce=200., fingerAForce=6, fingerBForce=5.5, fingerTipForce=6, \
+          urdfRootPath=pybullet_data.getDataPath(), timeStep=0.01): 
     self.urdfRootPath = urdfRootPath
     self.timeStep = timeStep
+    self.baseInitPos = baseInitPos
+    self.jointInitPos = jointInitPos
     self.gripperInitOrn = gripperInitOrn
     
     self.maxForce = 200.
-    self.fingerAForce = 6
-    self.fingerBForce = 5.5
-    self.fingerTipForce = 6
+    self.fingerAForce = fingerAForce
+    self.fingerBForce = fingerBForce
+    self.fingerTipForce = fingerTipForce
     self.useInverseKinematics = 1
     self.useSimulation = 1
     self.useNullSpace = 1
@@ -43,8 +47,8 @@ class Kuka:
     self.kukaUid = objects[0]
     #for i in range (p.getNumJoints(self.kukaUid)):
     #  print(p.getJointInfo(self.kukaUid,i))
-    p.resetBasePositionAndOrientation(self.kukaUid,[-0.100000,0.000000,0.070000],[0.000000,0.000000,0.000000,1.000000])
-    self.jointPositions=[ 0.006418, 0.413184, -0.011401, -1.589317, 0.005379, 1.137684, -0.006539, 0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    p.resetBasePositionAndOrientation(self.kukaUid,self.baseInitPos,[0.000000,0.000000,0.000000,1.000000])
+    self.jointPositions = self.jointInitPos
 
     self.numJoints = p.getNumJoints(self.kukaUid)
     for jointIndex in range (self.numJoints):

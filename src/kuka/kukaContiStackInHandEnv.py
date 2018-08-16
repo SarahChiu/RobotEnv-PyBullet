@@ -72,7 +72,10 @@ class KukaContiStackInHandEnv(gym.Env):
     orn1 = p.getQuaternionFromEuler([0,0,ang1])
     
     p.setGravity(0,0,-10)
-    self._kuka = kuka.Kuka(gripperInitOrn=[orn1[0],orn1[1],orn1[2],orn1[3]], urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
+    jInitPos = [0.006418, 0.413184, -0.011401, -1.589317, 0.005379, 1.137684, -0.006539, \
+            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200]
+    self._kuka = kuka.Kuka(baseInitPos=[-0.1,0.0,0.07], jointInitPos=jInitPos, gripperInitOrn=[orn1[0],orn1[1],orn1[2],orn1[3]], \
+            urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._kuka.setGoodInitStateEE(tempJPos, self._renders)
     self.block1Uid =p.loadURDF(os.path.join(self._urdfRoot,"cube_small.urdf"), xpos1,ypos1,-0.1,orn1[0],orn1[1],orn1[2],orn1[3])
 
@@ -201,7 +204,7 @@ class KukaContiStackInHandEnv(gym.Env):
       self._observation = self.getExtendedObservation()
       return True
     
-    if (actualEndEffectorPos[2] <= 0.15):
+    if (actualEndEffectorPos[2] <= 0.20):
       self.terminated = 1
       
       #print("opening gripper")
