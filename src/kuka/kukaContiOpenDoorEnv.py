@@ -131,13 +131,13 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     return np.array(self._observation)
 
-  def setGoodInitState(self, ob, jointPoses, door): #door: [pos, orn, joint angle]
+  def setGoodInitState(self, ob, jointPoses, extra=None): #extra --> door: [pos, orn, joint angle]
     self.reset()
     self._kuka.setGoodInitStateEE(jointPoses, self._renders)
     #Set pos, orn, and joint angle for the door
-    p.resetBasePositionAndOrientation(self.doorUid, door[0], door[1])
-    p.resetJointState(self.doorUid, 1, door[2])
-    p.setJointMotorControl2(self.doorUid, 1, p.POSITION_CONTROL, targetPosition=door[2], force=200.)
+    p.resetBasePositionAndOrientation(self.doorUid, extra[0], extra[1])
+    p.resetJointState(self.doorUid, 1, extra[2])
+    p.setJointMotorControl2(self.doorUid, 1, p.POSITION_CONTROL, targetPosition=extra[2], force=200.)
 
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
@@ -150,11 +150,11 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     return jointPoses
 
-  def getCurrentDoorInfo(self):
-      doorPos, doorOrn = p.getBasePositionAndOrientation(self.doorUid)
-      doorJointPos = p.getJointState(self.doorUid, 1)[0]
+  def getExtraInfo(self): #Current door info
+    doorPos, doorOrn = p.getBasePositionAndOrientation(self.doorUid)
+    doorJointPos = p.getJointState(self.doorUid, 1)[0]
 
-      return [doorPos, doorOrn, doorJointPos]
+    return [doorPos, doorOrn, doorJointPos]
 
   def step(self, action):
     return self.stepPosDiff(action)

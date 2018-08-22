@@ -143,7 +143,7 @@ class KukaContiStackInHandEnv(gym.Env):
 
     return np.array(self._observation)
 
-  def setGoodInitState(self, ob, jointPoses):
+  def setGoodInitState(self, ob, jointPoses, extra=None):
     self.reset()
     self._kuka.setGoodInitStateEE(jointPoses, self._renders)
     #Get pos and orn for the gripper
@@ -165,6 +165,9 @@ class KukaContiStackInHandEnv(gym.Env):
         jointPoses.append(list(state)[0])
 
     return jointPoses
+
+  def getExtraInfo(self):
+    return None
 
   def step(self, action):
     return self.stepPosDiff(action)
