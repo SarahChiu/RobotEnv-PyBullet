@@ -1,0 +1,62 @@
+<?xml version="0.0" ?>
+<robot name="peg">
+    <link name="world"/>
+
+    <joint name="fixed" type="fixed">
+        <parent link="world"/>
+        <child link="baseLink"/>
+        <origin xyz="0 0 0"/>
+    </joint>
+
+    <link name="baseLink">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0.005"/>
+            <mass value="1.0"/>
+            <inertia ixx="0.020842" ixy="0" ixz="0" iyy="0.020842" iyz="0" izz="0.041667"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0.5 0.5 0.01"/>
+            </geometry>
+            <material name="pegmat0">
+                <color rgba="0.1 0.7 0.1 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0.5 0.5 0.01"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="joint_baseLink_peg" type="fixed">
+        <parent link="baseLink"/>
+        <child link="pegLink"/>
+        <origin xyz="0 0 0.01"/>
+    </joint>
+
+    <link name="pegLink">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0.5"/>
+            <mass value="0.5"/>
+            <inertia ixx="0.042917" ixy="0" ixz="0" iyy="0.042917" iyz="0" izz="0.0025"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.0 0.0 0.25"/>
+            <geometry>
+                <cylinder length="0.5" radius="0.1"/>
+            </geometry>
+            <material name="pegmat1">
+                <color rgba="0.1 0.7 0.1 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.0 0.0 0.25"/>
+            <geometry>
+                <cylinder length="0.5" radius="0.1"/>
+            </geometry>
+        </collision>
+    </link>
+</robot>
