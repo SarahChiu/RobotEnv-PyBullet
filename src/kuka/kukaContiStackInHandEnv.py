@@ -65,18 +65,17 @@ class KukaContiStackInHandEnv(gym.Env):
     p.loadURDF(os.path.join(self._urdfRoot,"tray/tray.urdf"), 0.640000,0.075000,-0.190000,0.000000,0.000000,1.000000,0.000000)
 
     #Load a block for the gripper to grasp in hand
-    tempJPos=[ 0.006418, 1.134464, -0.011401, -1.589317, 0.005379, 0.436332, -0.006539, 0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
     xpos1 = 0.525
     ypos1 = 0.025
     ang1 = 1.570796
     orn1 = p.getQuaternionFromEuler([0,0,ang1])
     
     p.setGravity(0,0,-10)
-    jInitPos = [0.006418, 0.413184, -0.011401, -1.589317, 0.005379, 1.137684, -0.006539, \
-            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200]
+    jInitPos=[ 0.006418, 1.134464, -0.011401, -1.589317, 0.005379, 0.436332, -0.006539, \
+            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
     self._kuka = kuka.Kuka(baseInitPos=[-0.1,0.0,0.07], jointInitPos=jInitPos, gripperInitOrn=[orn1[0],orn1[1],orn1[2],orn1[3]], \
+            fingerAForce=60, fingerBForce=55, fingerTipForce=60, \
             urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
-    self._kuka.setGoodInitStateEE(tempJPos, self._renders)
     self.block1Uid =p.loadURDF(os.path.join(self._urdfRoot,"cube_small.urdf"), xpos1,ypos1,-0.1,orn1[0],orn1[1],orn1[2],orn1[3])
 
     fingerAngle = 0.3
@@ -231,12 +230,14 @@ class KukaContiStackInHandEnv(gym.Env):
   
   def _reward(self):
     
-    #rewards is height of target object
-    blockPos,_=p.getBasePositionAndOrientation(self.block1Uid)
+    #rewards is height of target object and the xy distance between two blocks
+    block1Pos,_=p.getBasePositionAndOrientation(self.block1Uid)
+    block2Pos,_=p.getBasePositionAndOrientation(self.block2Uid)
+    dis = np.linalg.norm(np.array(block1Pos[:2])-np.array(block2Pos[:2]))
 
     reward = 0.0
 
-    if (blockPos[2] > -0.125 and self.terminated and not self.gripper_closed):
+    if (block1Pos[2] > -0.125 and dis < 0.070711 and self.terminated and not self.gripper_closed):
       #print("stacked a block!!!")
       #print("self._envStepCounter")
       #print(self._envStepCounter)
