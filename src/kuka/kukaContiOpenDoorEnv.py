@@ -106,8 +106,7 @@ class KukaContiOpenDoorEnv(gym.Env):
 
   def getGoodInitState(self):
     self.reset()
-    goodJointPos=[ 0.610865, 0.523599, -0.011401, -1.308997, 0.005379, 0.000000, -0.006539, \
-            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    goodJointPos=[ 0.610865, 0.523599, -0.011401, -1.308997, 0.005379, 0.000000, -0.006539]
     self._kuka.initState(goodJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
@@ -115,8 +114,7 @@ class KukaContiOpenDoorEnv(gym.Env):
 
   def getMidInitState(self):
     self.reset()
-    midJointPos=[ 0.308642, 0.468392, -0.011401, -1.449157, 0.005379, 0.568842, -0.006539, \
-            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    midJointPos=[ 0.308642, 0.468392, -0.011401, -1.449157, 0.005379, 0.568842, -0.006539]
     self._kuka.initState(midJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
@@ -124,8 +122,7 @@ class KukaContiOpenDoorEnv(gym.Env):
 
   def getGoodMidInitState(self):
     self.reset()
-    goodMidJointPos=[ 0.459754, 0.495996, -0.011401, -1.404077, 0.005379, 0.284421, -0.006539, \
-      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    goodMidJointPos=[ 0.459754, 0.495996, -0.011401, -1.404077, 0.005379, 0.284421, -0.006539]
     self._kuka.initState(goodMidJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 

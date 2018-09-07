@@ -124,8 +124,7 @@ class KukaContiCleanUpEnv(gym.Env):
 
   def getGoodInitState(self):
     self.reset()
-    goodJointPos=[ 0.006418, 0.500000, -0.011401, -1.589317, 0.005379, 0.400000, -0.006539, \
-            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    goodJointPos=[ 0.006418, 0.500000, -0.011401, -1.589317, 0.005379, 0.400000, -0.006539]
     self._kuka.initState(goodJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
@@ -133,8 +132,7 @@ class KukaContiCleanUpEnv(gym.Env):
 
   def getMidInitState(self):
     self.reset()
-    midJointPos=[ 0.006418, 0.412959, -0.011401, -1.589317, 0.005379, 0.812475, -0.006539, \
-      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    midJointPos=[ 0.006418, 0.412959, -0.011401, -1.589317, 0.005379, 0.812475, -0.006539]
     self._kuka.initState(midJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 

@@ -126,8 +126,7 @@ class KukaContiStackInHandEnv(gym.Env):
 
   def getGoodInitState(self):
     self.reset()
-    goodJointPos=[ 0.006418, 0.872665, -0.011401, -1.589317, 0.005379, 0.698132, -0.006539, \
-      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    goodJointPos=[ 0.006418, 0.872665, -0.011401, -1.589317, 0.005379, 0.698132, -0.006539]
     self._kuka.initState(goodJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
@@ -135,8 +134,7 @@ class KukaContiStackInHandEnv(gym.Env):
 
   def getMidInitState(self):
     self.reset()
-    midJointPos=[ 0.006418, 0.785398, -0.011401, -1.589317, 0.005379, 0.785398, -0.006539, \
-      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    midJointPos=[ 0.006418, 0.785398, -0.011401, -1.589317, 0.005379, 0.785398, -0.006539]
     self._kuka.initState(midJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 

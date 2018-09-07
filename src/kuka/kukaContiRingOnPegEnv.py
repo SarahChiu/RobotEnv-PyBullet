@@ -64,28 +64,18 @@ class KukaContiRingOnPegEnv(gym.Env):
     p.loadURDF(os.path.join(self._urdfRoot,"table/table.urdf"), 0.5000000,0.00000,-.820000,0.000000,0.000000,0.0,1.0)
 
     #Load a ring for the gripper to grasp in hand
-    xpos1 = 0.8
+    xpos1 = 0.0
     ypos1 = 0.0
     ang1 = 1.570796
-    orn1 = p.getQuaternionFromEuler([0,0,-ang1])
+    orn1 = p.getQuaternionFromEuler([ang1,0,-ang1])
     
     p.setGravity(0,0,-10)
-    jInitPos=[ 0.006418, 1.134464, -0.011401, -1.589317, 0.005379, 0.436332, -0.006539, \
-            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    jInitPos=[ 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, \
+            0.000048, -0.040000, 0.000000, -0.000043, 0.040000, 0.000000, -0.000200 ]
     self._kuka = kuka.Kuka(baseInitPos=[-0.1,0.0,0.07], jointInitPos=jInitPos, gripperInitOrn=[orn1[0],orn1[1],orn1[2],orn1[3]], \
             fingerAForce=60, fingerBForce=55, fingerTipForce=60, \
             urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
-    self.ringUid =p.loadURDF(os.path.join(os.environ['URDF_DATA'],"ring.urdf"), xpos1,ypos1,-0.15,orn1[0],orn1[1],orn1[2],orn1[3])
-
-    fingerAngle = 0.3
-     
-    for i in range (1000):
-        graspAction = [0,0,0,0,fingerAngle]
-        self._kuka.applyAction(graspAction)
-        p.stepSimulation()
-        fingerAngle = fingerAngle-(0.3/100.)
-        if (fingerAngle<0):
-            fingerAngle=0
+    self.ringUid =p.loadURDF(os.path.join(os.environ['URDF_DATA'],"ring.urdf"), xpos1,ypos1,1.7,orn1[0],orn1[1],orn1[2],orn1[3])
 
     resetInitPos = [0.006418, 0, -0.011401, -0.785398, 0.005379, 0, -0.006539]
     tempJPosDiff = np.array(resetInitPos) - np.array(jInitPos[0:7])
@@ -125,8 +115,7 @@ class KukaContiRingOnPegEnv(gym.Env):
 
   def getGoodInitState(self):
     self.reset()
-    goodJointPos=[ 0.006418, -0.500000, -0.011401, -2.070796, 0.005379, 0.250000, -0.006539, \
-            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    goodJointPos=[ 0.006418, -0.500000, -0.011401, -2.070796, 0.005379, 0.250000, -0.006539]
     self._kuka.initState(goodJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
@@ -134,8 +123,7 @@ class KukaContiRingOnPegEnv(gym.Env):
 
   def getMidInitState(self):
     self.reset()
-    midJointPos=[ 0.006418, -0.250000, -0.011401, -1.428097, 0.005379, 0.125000, -0.006539, \
-      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    midJointPos=[ 0.006418, -0.250000, -0.011401, -1.428097, 0.005379, 0.125000, -0.006539]
     self._kuka.initState(midJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
@@ -143,8 +131,7 @@ class KukaContiRingOnPegEnv(gym.Env):
 
   def getGoodMidInitState(self):
     self.reset()
-    goodMidJointPos=[ 0.006418, -0.375000, -0.011401, -1.749447, 0.005379, 0.187500, -0.006539, \
-      0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200 ]
+    goodMidJointPos=[ 0.006418, -0.375000, -0.011401, -1.749447, 0.005379, 0.187500, -0.006539]
     self._kuka.initState(goodMidJointPos, self._renders)
     self._observation = self.getExtendedObservation()
 
@@ -207,16 +194,13 @@ class KukaContiRingOnPegEnv(gym.Env):
       return
 
   def _termination(self):
-    state = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)
-    actualEndEffectorPos = list(state[0])
-    actualEndEffectorOrn = list(state[1])
-    pegPos, _ = p.getBasePositionAndOrientation(self.pegUid)
+    ringPos, _ = p.getBasePositionAndOrientation(self.ringUid)
  
     if (self.terminated or self._envStepCounter > 10):
       self._observation = self.getExtendedObservation()
       return True
     
-    if (abs(pegPos[0]-actualEndEffectorPos[0]) <= 0.5):
+    if (ringPos[2] <= 0.55):
       self.terminated = 1
       
       #print("opening gripper")
@@ -237,9 +221,6 @@ class KukaContiRingOnPegEnv(gym.Env):
       tempJPosDiff = [0, -0.5, 0, 0, 0, 0, 0]
       self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
 
-      for i in range(5000):
-        p.stepSimulation()
-
       self._observation = self.getExtendedObservation()
       return True
 
@@ -247,14 +228,14 @@ class KukaContiRingOnPegEnv(gym.Env):
 
   def _reward(self):
     
-    #reward is xy distance between ring and peg
+    #reward is the height of ring and xy distance between ring and peg
     ringPos,_ = p.getBasePositionAndOrientation(self.ringUid)
     pegPos,_ = p.getBasePositionAndOrientation(self.pegUid)
     dis = np.linalg.norm(np.array(ringPos[:2])-np.array(pegPos[:2]))
 
     reward = 0.0
 
-    if (dis < 0.05 and self.terminated and not self.gripper_closed):
+    if (ringPos[2] < 0.1 and dis < 0.14 and self.terminated and not self.gripper_closed):
       #print("ring on peg!!!")
       #print("self._envStepCounter")
       #print(self._envStepCounter)
@@ -263,10 +244,9 @@ class KukaContiRingOnPegEnv(gym.Env):
 
     return reward
 
-  #TODO: There is some problem with the collision, do not use this function
   def internalReward(self):
     #reward is the distance between ring and peg
-    closestPoints = p.getClosestPoints(self.ringUid,self.pegUid,1000)
+    closestPoints = p.getClosestPoints(self.ringUid, self.pegUid, 1000, linkIndexB=0)
     reward = -1000
     numPt = len(closestPoints)
     if (numPt>0):
