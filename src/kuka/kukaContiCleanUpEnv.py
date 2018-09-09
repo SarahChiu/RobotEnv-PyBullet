@@ -229,10 +229,12 @@ class KukaContiCleanUpEnv(gym.Env):
     
     #reward is if the block is placed into the box
     contactPts = p.getContactPoints(self.blockUid, self.boxUid)
+    blockPos, _ = p.getBasePositionAndOrientation(self.blockUid)
 
     reward = 0.0
 
-    if (len(contactPts)>0 and self.terminated and not self.gripper_closed):
+    if (len(contactPts)>0 and blockPos[2]<0.1 and blockPos[2]>-0.1 \
+            and self.terminated and not self.gripper_closed):
       #print("clean up!!!")
       #print("self._envStepCounter")
       #print(self._envStepCounter)
