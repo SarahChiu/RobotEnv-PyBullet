@@ -50,7 +50,7 @@ class KukaContiPourEnv(gym.Env):
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
 
-  def reset(self):
+  def reset(self, finalJPos=[0.006418, 0, -0.011401, -1.070796, 0.005379, 0.5, -1.570796]):
     self.terminated = 0
     self.gripper_closed = 1
     p.resetSimulation()
@@ -63,7 +63,6 @@ class KukaContiPourEnv(gym.Env):
     box_ypos = 0 + 0.05 * random.random()
     box_ang = 3.141593*random.random()
     box_orn = p.getQuaternionFromEuler([1.570796,0,box_ang])
-    self.boxUid = p.loadURDF(os.path.join(os.environ['URDF_DATA'],"cardboard_box.urdf"), [box_xpos,box_ypos,0], box_orn)
 
     #Load a cup for the gripper to grasp in hand
     xpos = 0.25
@@ -83,12 +82,16 @@ class KukaContiPourEnv(gym.Env):
     tempJPosDiff = np.array(resetInitPos) - np.array(jInitPos[0:7])
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
 
-    #Load 5 cubes in the cup
+    #Load 2 cubes in the cup
     cup_pos, _ = p.getBasePositionAndOrientation(self.cupUid)
     self.cubeUids = []
     for i in range(2):
         self.cubeUids.append(p.loadURDF(os.path.join(self._urdfRoot,"cube_small.urdf"),\
                 [cup_pos[0],cup_pos[1],(i+1)*0.1+cup_pos[2]]))
+    tempJPosDiff = np.array(finalJPos) - np.array(resetInitPos)
+    self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
+
+    self.boxUid = p.loadURDF(os.path.join(os.environ['URDF_DATA'],"cardboard_box.urdf"), [box_xpos,box_ypos,0], box_orn)
 
     self._envStepCounter = 0
     for i in range(100):
@@ -119,9 +122,8 @@ class KukaContiPourEnv(gym.Env):
      return self._observation
 
   def getGoodInitState(self):
-    self.reset()
     goodJointPos=[ 0.250000, 0.250000, -0.011401, -1.589317, 0.005379, 0.400000, -1.570796]
-    self._kuka.initState(goodJointPos, self._renders)
+    self.reset(finalJPos=goodJointPos)
 
     tempJPosDiff = [0, 0, 0, 0, 0, 0, -0.5+1.570796]
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
@@ -132,26 +134,27 @@ class KukaContiPourEnv(gym.Env):
     return np.array(self._observation), goodJointPos[0:7]
 
   def getMidInitState(self):
-    self.reset()
     midJointPos=[ 0.128209, 0.125000, -0.011401, -1.330057, 0.005379, 0.450000, -1.035398]
-    self._kuka.initState(midJointPos, self._renders)
+    self.reset(finalJPos=midJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)
 
   def getGoodMidInitState(self):
-    self.reset()
-    goodMidJointPos=[ 0.189105, 0.187500, -0.011401, -1.459687, 0.005379, 0.425000, -0.767699]
-    self._kuka.initState(goodMidJointPos, self._renders)
+    goodMidJointPos=[ 0.189105, 0.187500, -0.011401, -1.459687, 0.005379, 0.425000, -1.570796]
+    self.reset(finalJPos=goodMidJointPos)
     self._observation = self.getExtendedObservation()
+
+    tempJPosDiff = [0, 0, 0, 0, 0, 0, -0.767699+1.570796]
+    self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
+    goodMidJointPos[-1] = -0.767699
 
     return np.array(self._observation)
 
   def setGoodInitState(self, ob, jointPoses, extra=None):
-    self.reset()
     tempJoint7 = jointPoses[-1]
     jointPoses[-1] = -1.570796
-    self._kuka.setGoodInitStateEE(jointPoses, self._renders)
+    self.reset(finalJPos=jointPoses)
 
     tempJPosDiff = [0, 0, 0, 0, 0, 0, tempJoint7+1.570796]
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
@@ -242,6 +245,8 @@ class KukaContiPourEnv(gym.Env):
     cube1Pos, _ = p.getBasePositionAndOrientation(self.cubeUids[0])
     cube2Pos, _ = p.getBasePositionAndOrientation(self.cubeUids[1])
     cupPos, _ = p.getBasePositionAndOrientation(self.cupUid)
+    _, boxOrn = p.getBasePositionAndOrientation(self.boxUid)
+    boxOrn = p.getEulerFromQuaternion(boxOrn)
 
     reward = 0.0
 
@@ -249,6 +254,7 @@ class KukaContiPourEnv(gym.Env):
             and cube1Pos[2]<0.1 and cube1Pos[2]>-0.1 \
             and cube2Pos[2]<0.1 and cube2Pos[2]>-0.1 \
             and cupPos[2] > 0.15 \
+            and (boxOrn[0]-1.570796) < 0.01 and boxOrn[1] < 0.01 \
             and self.terminated and self.gripper_closed):
       #print("pour!!!")
       #print("self._envStepCounter")

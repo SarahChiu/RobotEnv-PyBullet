@@ -1,0 +1,29 @@
+<?xml version="0.0" ?>
+<robot name="plate">
+    <link name="plateLink">
+        <contact>
+            <lateral_friction value="100.0"/>
+            <spinning_friction value=".001"/>
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="0.02"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0.3 0.3 0.03"/>
+            </geometry>
+            <material name="pegmat0">
+                <color rgba="0.1 0.7 0.1 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0.3 0.3 0.03"/>
+            </geometry>
+        </collision>
+    </link>
+</robot>
