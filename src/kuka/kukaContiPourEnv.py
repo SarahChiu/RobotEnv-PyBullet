@@ -143,11 +143,12 @@ class KukaContiPourEnv(gym.Env):
   def getGoodMidInitState(self):
     goodMidJointPos=[ 0.189105, 0.187500, -0.011401, -1.459687, 0.005379, 0.425000, -1.570796]
     self.reset(finalJPos=goodMidJointPos)
-    self._observation = self.getExtendedObservation()
 
     tempJPosDiff = [0, 0, 0, 0, 0, 0, -0.767699+1.570796]
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
     goodMidJointPos[-1] = -0.767699
+
+    self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)
 
@@ -158,6 +159,7 @@ class KukaContiPourEnv(gym.Env):
 
     tempJPosDiff = [0, 0, 0, 0, 0, 0, tempJoint7+1.570796]
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
+    jointPoses[-1] = tempJoint7
 
     #Get pos and orn for the gripper
     linkState = p.getLinkState(self._kuka.kukaUid, self._kuka.kukaEndEffectorIndex)

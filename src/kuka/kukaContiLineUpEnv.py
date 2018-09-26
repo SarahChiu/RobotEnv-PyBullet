@@ -145,6 +145,7 @@ class KukaContiLineUpEnv(gym.Env):
     self._kuka.setGoodInitStateEE(jointPoses, self._renders)
     tempJPosDiff = [0, 0, 0, 0, 0, 0, tempJoint7+0.006539]
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
+    jointPoses[-1] = tempJoint7
     #Get pos and orn for the gripper
     linkState = p.getLinkState(self._kuka.kukaUid, self._kuka.kukaEndEffectorIndex)
     gripperPos = list(linkState[0])
