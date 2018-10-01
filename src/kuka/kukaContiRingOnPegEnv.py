@@ -1,8 +1,4 @@
-import os, inspect
-#currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-#parentdir = os.path.dirname(os.path.dirname(currentdir))
-#os.sys.path.insert(0,parentdir)
-
+import os
 import math
 import gym
 from gym import spaces
@@ -53,7 +49,7 @@ class KukaContiRingOnPegEnv(gym.Env):
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
 
-  def reset(self):
+  def reset(self, finalJPos=[0.006418, 0, -0.011401, -0.785398, 0.005379, 0, -0.006539]):
     self.terminated = 0
     self.gripper_closed = 1
     p.resetSimulation()
@@ -77,8 +73,7 @@ class KukaContiRingOnPegEnv(gym.Env):
             urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self.ringUid =p.loadURDF(os.path.join(os.environ['URDF_DATA'],"ring.urdf"), xpos1,ypos1,1.7,orn1[0],orn1[1],orn1[2],orn1[3])
 
-    resetInitPos = [0.006418, 0, -0.011401, -0.785398, 0.005379, 0, -0.006539]
-    tempJPosDiff = np.array(resetInitPos) - np.array(jInitPos[0:7])
+    tempJPosDiff = np.array(finalJPos) - np.array(jInitPos[0:7])
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
 
     pegOrientation = p.getQuaternionFromEuler([0,0,0])
@@ -122,17 +117,15 @@ class KukaContiRingOnPegEnv(gym.Env):
     return np.array(self._observation), goodJointPos[0:7]
 
   def getMidInitState(self):
-    self.reset()
     midJointPos=[ 0.006418, -0.250000, -0.011401, -1.428097, 0.005379, 0.125000, -0.006539]
-    self._kuka.initState(midJointPos, self._renders)
+    self.reset(finalJPos=midJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)
 
   def getGoodMidInitState(self):
-    self.reset()
     goodMidJointPos=[ 0.006418, -0.375000, -0.011401, -1.749447, 0.005379, 0.187500, -0.006539]
-    self._kuka.initState(goodMidJointPos, self._renders)
+    self.reset(finalJPos=goodMidJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)

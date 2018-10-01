@@ -1,8 +1,4 @@
-import os, inspect
-#currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-#parentdir = os.path.dirname(os.path.dirname(currentdir))
-#os.sys.path.insert(0,parentdir)
-
+import os
 import math
 import gym
 from gym import spaces
@@ -53,7 +49,7 @@ class KukaContiStackInHandEnv(gym.Env):
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
 
-  def reset(self):
+  def reset(self, finalJPos=[0.006418, 0.325918, -0.011401, -1.589317, 0.005379, 1.224950, -0.006539]):
     self.terminated = 0
     self.gripper_closed = 1
     p.resetSimulation()
@@ -88,7 +84,7 @@ class KukaContiStackInHandEnv(gym.Env):
         if (fingerAngle<0):
             fingerAngle=0
 
-    tempJPosDiff = [0, -0.808546, 0, 0, 0, 0.788618, 0]
+    tempJPosDiff = np.array(finalJPos) - np.array(jInitPos[0:7])
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
 
     xpos2 = 0.5 +0.05*random.random()
@@ -125,17 +121,15 @@ class KukaContiStackInHandEnv(gym.Env):
      return self._observation
 
   def getGoodInitState(self):
-    self.reset()
     goodJointPos=[ 0.006418, 0.872665, -0.011401, -1.589317, 0.005379, 0.698132, -0.006539]
-    self._kuka.initState(goodJointPos, self._renders)
+    self.reset(finalJPos=goodJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation), goodJointPos[0:7]
 
   def getMidInitState(self):
-    self.reset()
     midJointPos=[ 0.006418, 0.785398, -0.011401, -1.589317, 0.005379, 0.785398, -0.006539]
-    self._kuka.initState(midJointPos, self._renders)
+    self.reset(finalJPos=midJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)

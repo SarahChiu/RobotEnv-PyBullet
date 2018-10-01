@@ -1,5 +1,4 @@
-import os, inspect
-
+import os
 import math
 import gym
 from gym import spaces
@@ -62,7 +61,7 @@ class KukaContiPourEnv(gym.Env):
     box_xpos = 0.85 + 0.05 * random.random()
     box_ypos = 0 + 0.05 * random.random()
     box_ang = 3.141593*random.random()
-    box_orn = p.getQuaternionFromEuler([1.570796,0,box_ang])
+    box_orn = p.getQuaternionFromEuler([0,0,box_ang])
 
     #Load a cup for the gripper to grasp in hand
     xpos = 0.25
@@ -91,7 +90,8 @@ class KukaContiPourEnv(gym.Env):
     tempJPosDiff = np.array(finalJPos) - np.array(resetInitPos)
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
 
-    self.boxUid = p.loadURDF(os.path.join(os.environ['URDF_DATA'],"cardboard_box.urdf"), [box_xpos,box_ypos,0], box_orn)
+    self.boxUid = p.loadURDF(os.path.join(os.environ['URDF_DATA'],"box.urdf"), [box_xpos,box_ypos,0], box_orn)
+    p.resetJointState(self.boxUid, 1, 3.141596)
 
     self._envStepCounter = 0
     for i in range(100):
@@ -246,17 +246,16 @@ class KukaContiPourEnv(gym.Env):
     contact2Pts = p.getContactPoints(self.cubeUids[1], self.cupUid)
     cube1Pos, _ = p.getBasePositionAndOrientation(self.cubeUids[0])
     cube2Pos, _ = p.getBasePositionAndOrientation(self.cubeUids[1])
-    cupPos, _ = p.getBasePositionAndOrientation(self.cupUid)
-    _, boxOrn = p.getBasePositionAndOrientation(self.boxUid)
-    boxOrn = p.getEulerFromQuaternion(boxOrn)
+    boxJointOrn = p.getJointState(self.boxUid, 1)[0]
+    contactPts = p.getContactPoints(self._kuka.kukaUid, self.cupUid)
 
     reward = 0.0
 
-    if (len(contact1Pts)==0 and len(contact2Pts)==0 \
-            and cube1Pos[2]<0.1 and cube1Pos[2]>-0.1 \
-            and cube2Pos[2]<0.1 and cube2Pos[2]>-0.1 \
-            and cupPos[2] > 0.15 \
-            and (boxOrn[0]-1.570796) < 0.01 and boxOrn[1] < 0.01 \
+    if (len(contact1Pts) == 0 and len(contact2Pts) == 0 \
+            and cube1Pos[2]>-0.0375 \
+            and cube2Pos[2]>-0.0375 \
+            and (boxJointOrn-3.141596) < 0.01 \
+            and len(contactPts) > 0 \
             and self.terminated and self.gripper_closed):
       #print("pour!!!")
       #print("self._envStepCounter")

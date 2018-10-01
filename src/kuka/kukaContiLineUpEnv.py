@@ -1,5 +1,4 @@
-import os, inspect
-
+import os
 import math
 import gym
 from gym import spaces
@@ -50,7 +49,7 @@ class KukaContiLineUpEnv(gym.Env):
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
 
-  def reset(self):
+  def reset(self, finalJPos=[0.006418, 0.325918, -0.011401, -1.589317, 0.005379, 1.224950, -0.006539]):
     self.terminated = 0
     self.gripper_closed = 1
     p.resetSimulation()
@@ -75,7 +74,7 @@ class KukaContiLineUpEnv(gym.Env):
             urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self.block1Uid =p.loadURDF(os.path.join(self._urdfRoot,"block.urdf"), xpos1,ypos1,-0.18,orn1[0],orn1[1],orn1[2],orn1[3])
 
-    tempJPosDiff = [0, -0.808546, 0, 0, 0, 0.788618, 0]
+    tempJPosDiff = np.array(finalJPos) - np.array(jInitPos[0:7])
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
 
     xpos2 = 0.5 +0.05*random.random()
@@ -112,15 +111,13 @@ class KukaContiLineUpEnv(gym.Env):
      return self._observation
 
   def getGoodInitState(self):
-    self.reset()
+    goodJointPos=[ 0.006418, 0.922665, -0.011401, -1.589317, 0.005379, 0.648132, -0.006539]
+    self.reset(finalJPos=goodJointPos)
 
     _, block1Orn = p.getBasePositionAndOrientation(self.block1Uid)
     block1Orn = list(p.getEulerFromQuaternion(block1Orn))
     _, block2Orn = p.getBasePositionAndOrientation(self.block2Uid)
     block2Orn = list(p.getEulerFromQuaternion(block2Orn))
-
-    goodJointPos=[ 0.006418, 0.922665, -0.011401, -1.589317, 0.005379, 0.648132, -0.006539]
-    self._kuka.initState(goodJointPos, self._renders)
 
     tempJPosDiff = [0, 0, 0, 0, 0, 0, -block2Orn[2]+block1Orn[2]+0.006539]
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
@@ -131,9 +128,8 @@ class KukaContiLineUpEnv(gym.Env):
     return np.array(self._observation), goodJointPos[0:7]
 
   def getMidInitState(self):
-    self.reset()
     midJointPos=[ 0.006418, 0.785398, -0.011401, -1.589317, 0.005379, 0.785398, -0.006539]
-    self._kuka.initState(midJointPos, self._renders)
+    self.reset(finalJPos=midJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)

@@ -1,8 +1,4 @@
-import os,  inspect
-#currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-#parentdir = os.path.dirname(os.path.dirname(currentdir))
-#os.sys.path.insert(0,parentdir)
-
+import os
 import math
 import gym
 from gym import spaces
@@ -53,7 +49,7 @@ class KukaContiOpenDoorEnv(gym.Env):
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
 
-  def reset(self):
+  def reset(self, finalJPos=[0.006418, 0.413184, -0.011401, -1.589317, 0.005379, 1.137684, -0.006539]):
     self.terminated = 0
     self.gripper_closed = 0
     p.resetSimulation()
@@ -70,8 +66,7 @@ class KukaContiOpenDoorEnv(gym.Env):
 
     p.setGravity(0,0,-10)
     orn = p.getQuaternionFromEuler([0,0,0])
-    jInitPos = [0.006418, 0.413184, -0.011401, -1.589317, 0.005379, 1.137684, -0.006539, \
-            0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200]
+    jInitPos = finalJPos + [0.000048, -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200]
     self._kuka = kuka.Kuka(baseInitPos=[-0.1,0.0,0.07], jointInitPos = jInitPos, gripperInitOrn=[orn[0],orn[1],orn[2],orn[3]], \
             fingerAForce=60, fingerBForce=55, fingerTipForce=60, \
             urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
@@ -105,25 +100,22 @@ class KukaContiOpenDoorEnv(gym.Env):
      return self._observation
 
   def getGoodInitState(self):
-    self.reset()
     goodJointPos=[ 0.610865, 0.523599, -0.011401, -1.308997, 0.005379, 0.000000, -0.006539]
-    self._kuka.initState(goodJointPos, self._renders)
+    self.reset(finalJPos=goodJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation), goodJointPos[0:7]
 
   def getMidInitState(self):
-    self.reset()
     midJointPos=[ 0.308642, 0.468392, -0.011401, -1.449157, 0.005379, 0.568842, -0.006539]
-    self._kuka.initState(midJointPos, self._renders)
+    self.reset(finalJPos=midJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)
 
   def getGoodMidInitState(self):
-    self.reset()
     goodMidJointPos=[ 0.459754, 0.495996, -0.011401, -1.404077, 0.005379, 0.284421, -0.006539]
-    self._kuka.initState(goodMidJointPos, self._renders)
+    self.reset(finalJPos=goodMidJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)

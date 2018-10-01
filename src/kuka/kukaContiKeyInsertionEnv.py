@@ -1,5 +1,4 @@
-import os, inspect
-
+import os
 import math
 import gym
 from gym import spaces
@@ -50,7 +49,7 @@ class KukaContiKeyInsertionEnv(gym.Env):
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
 
-  def reset(self):
+  def reset(self, finalJPos=[0.006418, 0, -0.011401, -0.785398, 0.005379, 0, 1.570796]):
     self.terminated = 0
     self.gripper_closed = 1
     p.resetSimulation()
@@ -74,8 +73,7 @@ class KukaContiKeyInsertionEnv(gym.Env):
             urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self.keyUid =p.loadURDF(os.path.join(os.environ['URDF_DATA'],"key.urdf"), xpos1,ypos1,1.5,orn1[0],orn1[1],orn1[2],orn1[3])
 
-    resetInitPos = [0.006418, 0, -0.011401, -0.785398, 0.005379, 0, 1.570796]
-    tempJPosDiff = np.array(resetInitPos) - np.array(jInitPos[0:7])
+    tempJPosDiff = np.array(finalJPos) - np.array(jInitPos[0:7])
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
 
     xpos2 = 0.9 + 0.05*random.random()
@@ -119,17 +117,15 @@ class KukaContiKeyInsertionEnv(gym.Env):
     return np.array(self._observation), goodJointPos[0:7]
 
   def getMidInitState(self):
-    self.reset()
     midJointPos=[ 0.006418, 0.356592, -0.011401, -1.187358, 0.005379, -0.356592, 1.570796]
-    self._kuka.initState(midJointPos, self._renders)
+    self.reset(finalJPos=midJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)
 
   def getGoodMidInitState(self):
-    self.reset()
     goodMidJointPos=[ 0.006418, 0.534888, -0.011401, -1.388338, 0.005379, -0.534888, 1.570796]
-    self._kuka.initState(goodMidJointPos, self._renders)
+    self.reset(finalJPos=goodMidJointPos)
     self._observation = self.getExtendedObservation()
 
     return np.array(self._observation)
