@@ -3,13 +3,24 @@ import numpy as np
 import pybullet as p
 from . import kuka
 import random
-from kuka.kukaContiEnv import KukaContiEnv
+from kuka.kukaContiCamEnv import KukaContiCamEnv
 
-class KukaContiRingOnPegEnv(KukaContiEnv):
+class KukaContiCamRingOnPegEnv(KukaContiCamEnv):
   def __init__(self,
                renders=False):
-    super(KukaContiRingOnPegEnv, self).__init__(renders=renders)
+    super(KukaContiCamRingOnPegEnv, self).__init__(renders=renders)
     self.gripper_closed = 1
+    '''
+    self.viewMat = [-1.0, 7.60898473117777e-08, -2.6199842295682174e-08, 0.0, -8.04742015247939e-08, -0.9455185532569885, \
+            0.32556819915771484, 0.0, 0.0, 0.32556819915771484, 0.9455185532569885, 0.0, 0.5199999809265137, -0.08166629076004028, \
+            -1.8978652954101562, 1.0]
+    self.projMatrix = [0.69921875, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0, 0.0, 0.0, \
+            -0.02000020071864128, 0.0]
+    '''
+    self.viewMat = [1.0, 0.0, -0.0, 0.0, -0.0, 0.9998477101325989, -0.017452415078878403, 0.0, 0.0, 0.017452415078878403, \
+            0.9998477101325989, 0.0, -0.7200000286102295, 0.20572884380817413, -1.6235408782958984, 1.0]
+    self.projMatrix = [0.69921875, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0, 0.0, 0.0, \
+            -0.02000020071864128, 0.0]
 
   def reset(self, finalJPos=[0.006418, 0, -0.011401, -0.785398, 0.005379, 0, -0.006539]):
     self.terminated = 0
@@ -39,29 +50,14 @@ class KukaContiRingOnPegEnv(KukaContiEnv):
     self._kuka.applyPosDiffAction(tempJPosDiff, self._renders)
 
     pegOrientation = p.getQuaternionFromEuler([0,0,0])
-    xpos2 = 0.8 + 0.05*random.random()
-    ypos2 = 0 + 0.05*random.random()
+    xpos2 = 0.8 + 0.15*random.random() #TODO
+    ypos2 = 0 + 0.15*random.random() #TODO
     self.pegUid =p.loadURDF(os.path.join(os.environ['URDF_DATA'],"peg.urdf"), [xpos2,ypos2,0.0], pegOrientation)
 
     self._envStepCounter = 0
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
     return np.array(self._observation)
-
-  def getExtendedObservation(self):
-     self._observation = self._kuka.getObservation()
-     eeState  = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)
-     endEffectorPos = eeState[0]
-     endEffectorOrn = eeState[1]
-     pegPos,pegOrn = p.getBasePositionAndOrientation(self.pegUid)
-
-     invEEPos,invEEOrn = p.invertTransform(endEffectorPos,endEffectorOrn)
-     pegPosInEE,pegOrnInEE = p.multiplyTransforms(invEEPos,invEEOrn,pegPos,pegOrn)
-     pegEulerInEE = p.getEulerFromQuaternion(pegOrnInEE)
-     self._observation.extend(list(pegPosInEE))
-     self._observation.extend(list(pegEulerInEE))
-
-     return self._observation
 
   def getGoodInitState(self):
     self.reset()

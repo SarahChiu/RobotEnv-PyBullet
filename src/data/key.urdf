@@ -12,7 +12,7 @@
                 <box size="0.1 0.1 0.03"/>
             </geometry>
             <material name="keymat0">
-                <color rgba="0.1 0.7 0.1 1"/>
+                <color rgba="1.0 0.0 0.0 1"/>
             </material>
         </visual>
         <collision>
@@ -41,7 +41,7 @@
                 <box size="0.03 0.03 0.4"/>
             </geometry>
             <material name="keymat1">
-                <color rgba="0.1 0.7 0.1 1"/>
+                <color rgba="1.0 0.0 0.0 1"/>
             </material>
         </visual>
         <collision>

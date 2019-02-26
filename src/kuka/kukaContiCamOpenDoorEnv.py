@@ -3,11 +3,22 @@ import numpy as np
 import pybullet as p
 from . import kuka
 import random
-from kuka.kukaContiEnv import KukaContiEnv
+from kuka.kukaContiCamEnv import KukaContiCamEnv
 
-class KukaContiOpenDoorEnv(KukaContiEnv):
+class KukaContiCamOpenDoorEnv(KukaContiCamEnv):
   def __init__(self, renders=False):
-    super(KukaContiOpenDoorEnv, self).__init__(renders=renders)
+    super(KukaContiCamOpenDoorEnv, self).__init__(renders=renders)
+    '''
+    self.viewMat = [-1.0, 5.355624210778842e-08, -6.160941268262832e-08, 0.0, -8.16332672570752e-08, -0.6560590267181396, \
+            0.7547096014022827, 0.0, 0.0, 0.7547096014022827, 0.6560590267181396, 0.0, 0.5199999809265137, 0.11784231662750244, \
+            -1.5674786567687988, 1.0]
+    self.projMatrix = [0.69921875, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0, 0.0, 0.0, \
+            -0.02000020071864128, 0.0]
+    '''
+    self.viewMat = [1.0, 0.0, -0.0, 0.0, -0.0, 0.9998477101325989, -0.017452415078878403, 0.0, 0.0, 0.017452415078878403, \
+            0.9998477101325989, 0.0, -0.7200000286102295, 0.20572884380817413, -1.6235408782958984, 1.0]
+    self.projMatrix = [0.69921875, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0, 0.0, 0.0, \
+            -0.02000020071864128, 0.0]
 
   def reset(self, finalJPos=[0.006418, 0.413184, -0.011401, -1.589317, 0.005379, 1.137684, -0.006539]):
     self.terminated = 0
@@ -20,8 +31,8 @@ class KukaContiOpenDoorEnv(KukaContiEnv):
     p.loadURDF(os.path.join(self._urdfRoot,"table/table.urdf"), 0.5000000,0.00000,-.820000,0.000000,0.000000,0.0,1.0)
     
     doorOrientation = p.getQuaternionFromEuler([0,0,1.570796])
-    xpos = 0.9 + 0.05 * random.random()
-    ypos = -0.25 + 0.05 * random.random()
+    xpos = 0.9 + 0.1 * random.random() #TODO
+    ypos = -0.25 + 0.1 * random.random() #TODO
     self.doorUid = p.loadURDF(os.path.join(os.environ['URDF_DATA'],"door.urdf"), [xpos, ypos, 0.0], doorOrientation)
 
     p.setGravity(0,0,-10)
@@ -34,23 +45,6 @@ class KukaContiOpenDoorEnv(KukaContiEnv):
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
     return np.array(self._observation)
-
-  def getExtendedObservation(self):
-     self._observation = self._kuka.getObservation()
-     eeState  = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)
-     endEffectorPos = eeState[0]
-     endEffectorOrn = eeState[1]
-
-     doorKnobState = p.getLinkState(self.doorUid, 2)
-     doorKnobPos,doorKnobOrn = doorKnobState[0], doorKnobState[1]
-
-     invEEPos,invEEOrn = p.invertTransform(endEffectorPos,endEffectorOrn)
-     doorKnobPosInEE,doorKnobOrnInEE = p.multiplyTransforms(invEEPos,invEEOrn,doorKnobPos,doorKnobOrn)
-     doorKnobEulerInEE = p.getEulerFromQuaternion(doorKnobOrnInEE)
-     self._observation.extend(list(doorKnobPosInEE))
-     self._observation.extend(list(doorKnobEulerInEE))
-
-     return self._observation
 
   def getGoodInitState(self):
     goodJointPos=[ 0.610865, 0.523599, -0.011401, -1.308997, 0.005379, 0.000000, -0.006539]

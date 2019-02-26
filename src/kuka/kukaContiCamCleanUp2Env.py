@@ -3,13 +3,24 @@ import numpy as np
 import pybullet as p
 from . import kuka
 import random
-from kuka.kukaContiEnv import KukaContiEnv
+from kuka.kukaContiCamEnv import KukaContiCamEnv
 
-class KukaContiCleanUp2Env(KukaContiEnv):
+class KukaContiCamCleanUp2Env(KukaContiCamEnv):
   def __init__(self,
                renders=False):
-    super(KukaContiCleanUp2Env, self).__init__(renders=renders)
+    super(KukaContiCamCleanUp2Env, self).__init__(renders=renders)
     self.gripper_closed = 1
+    '''
+    self.viewMat = [-1.0, 1.3315725766460673e-07, -4.5849727570157484e-08, 0.0, -1.4082986865560088e-07, -0.9455186128616333, \
+            0.32556819915771484, 0.0, 0.0, 0.32556819915771484, 0.9455186128616333, 0.0, 0.5199999809265137, -0.08166629076004028, \
+            -0.9228652715682983, 1.0]
+    self.projMatrix = [0.69921875, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0, 0.0, 0.0, \
+            -0.02000020071864128, 0.0]
+    '''
+    self.viewMat = [1.0, 0.0, -0.0, 0.0, -0.0, 0.9998477101325989, -0.017452415078878403, 0.0, 0.0, 0.017452415078878403, \
+            0.9998477101325989, 0.0, -0.7200000286102295, 0.20572884380817413, -1.6235408782958984, 1.0]
+    self.projMatrix = [0.69921875, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0, 0.0, 0.0, \
+            -0.02000020071864128, 0.0]
 
   def reset(self, finalJPos=[0.006418, 0.325918, -0.011401, -1.589317, 0.005379, 1.224950, -0.006539]):
     self.terminated = 0
@@ -20,8 +31,8 @@ class KukaContiCleanUp2Env(KukaContiEnv):
     p.loadURDF(os.path.join(self._urdfRoot,"plane.urdf"),[0,0,-1])
     
     p.loadURDF(os.path.join(self._urdfRoot,"table/table.urdf"), 0.5000000,0.00000,-.820000,0.000000,0.000000,0.0,1.0)
-    box_xpos = 0.8 + 0.05 * random.random()
-    box_ypos = 0 + 0.05 * random.random()
+    box_xpos = 0.8 + 0.15 * random.random() #TODO
+    box_ypos = 0 + 0.15 * random.random() #TODO
     box_ang = -1.570796
     box_orn = p.getQuaternionFromEuler([0,0,box_ang])
     self.boxUid = p.loadURDF(os.path.join(os.environ['URDF_DATA'],"box.urdf"), [box_xpos,box_ypos,0], box_orn)
@@ -57,21 +68,6 @@ class KukaContiCleanUp2Env(KukaContiEnv):
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
     return np.array(self._observation)
-
-  def getExtendedObservation(self):
-     self._observation = self._kuka.getObservation()
-     eeState  = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)
-     endEffectorPos = eeState[0]
-     endEffectorOrn = eeState[1]
-     boxPos,boxOrn = p.getBasePositionAndOrientation(self.boxUid)
-
-     invEEPos,invEEOrn = p.invertTransform(endEffectorPos,endEffectorOrn)
-     boxPosInEE,boxOrnInEE = p.multiplyTransforms(invEEPos,invEEOrn,boxPos,boxOrn)
-     boxEulerInEE = p.getEulerFromQuaternion(boxOrnInEE)
-     self._observation.extend(list(boxPosInEE))
-     self._observation.extend(list(boxEulerInEE))
-
-     return self._observation
 
   def getGoodInitState(self):
     goodJointPos=[ 0.006418, 0.850000, -0.011401, -1.589317, 0.005379, 0.350000, -0.006539]
