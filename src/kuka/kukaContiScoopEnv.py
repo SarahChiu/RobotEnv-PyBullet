@@ -39,7 +39,12 @@ class KukaContiScoopEnv(KukaContiEnv):
 
   def _termination(self):
     blockPos,_=p.getBasePositionAndOrientation(self.blockUid)
- 
+
+    if blockPos[2] >= -0.125:
+      for _ in range(500):
+        p.stepSimulation()
+      blockPos,_=p.getBasePositionAndOrientation(self.blockUid)
+
     if (blockPos[2] >= -0.125 or self._envStepCounter > 10):
       self.terminated = 1
       self._observation = self.getExtendedObservation()
