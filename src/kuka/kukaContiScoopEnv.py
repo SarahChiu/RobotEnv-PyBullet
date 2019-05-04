@@ -25,12 +25,13 @@ class KukaContiScoopEnv(KukaContiEnv):
     jInitPos = [0.006418, 1.097197, -0.011401, -1.589317, 0.005379, 0.523598, -0.006539, \
             0.000048, 0.0, 0.000000, -0.000043, 0.0, 0.000000, -0.000200]
     self._kuka = kuka.Kuka(baseInitPos=[-0.1,0.0,0.07], jointInitPos=jInitPos, gripperInitOrn=[orn[0],orn[1],orn[2],orn[3]], \
-            urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
+            maxVelocity=.5, urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
 
     endEffectorPos = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)[0]
     xpos = np.clip(endEffectorPos[0] + 0.05*random.choice([-1,1]) + 0.05*random.random(), 0.455, 0.69)
     ypos = np.clip(endEffectorPos[1] + 0.05*random.choice([-1,1]) + 0.05*random.random(), -0.125, 0.25)
     self.blockUid =p.loadURDF(os.path.join(self._urdfRoot,"cube_small.urdf"),xpos,ypos,-0.159,orn[0],orn[1],orn[2],orn[3])
+    self.prevBlockPos = np.array([xpos, ypos, -0.159])
 
     self._envStepCounter = 0
     p.stepSimulation()
@@ -39,13 +40,14 @@ class KukaContiScoopEnv(KukaContiEnv):
 
   def _termination(self):
     blockPos,_=p.getBasePositionAndOrientation(self.blockUid)
+    endEffectorPos = p.getLinkState(self._kuka.kukaUid,self._kuka.kukaEndEffectorIndex)[0]
 
     if blockPos[2] >= -0.125:
       for _ in range(500):
         p.stepSimulation()
       blockPos,_=p.getBasePositionAndOrientation(self.blockUid)
 
-    if (blockPos[2] >= -0.125 or self._envStepCounter > 10):
+    if (blockPos[2] >= -0.125 or endEffectorPos[2] >= 0.2 or self._envStepCounter > 10):
       self.terminated = 1
       self._observation = self.getExtendedObservation()
       return True
@@ -62,4 +64,16 @@ class KukaContiScoopEnv(KukaContiEnv):
     if (blockPos[2] > -0.125 and self.terminated):
       reward = 1.0
 
+    return reward
+
+  def internalReward(self):
+    #reward is the xy position and height of the target object
+    blockPos,_=p.getBasePositionAndOrientation(self.blockUid)
+    reward = 0.0
+    if (blockPos[0] >= 0.325 and blockPos[0] <= 0.8 and blockPos[1] >= -0.225 and blockPos[1] <= 0.375 and \
+            np.linalg.norm(blockPos[0:2]-self.prevBlockPos[0:2]) > 0.05):
+      reward = np.linalg.norm(blockPos[0:2]-np.array([0.5725, 0.0625]))
+    if (blockPos[2] > -0.125 and self.terminated):
+      reward += 10.
+    self.prevBlockPos = np.array(blockPos)
     return reward

@@ -1,8 +1,4 @@
 import os,  inspect
-#currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-#parentdir = os.path.dirname(os.path.dirname(currentdir))
-#os.sys.path.insert(0,parentdir)
-
 import pybullet as p
 import numpy as np
 import copy
@@ -13,7 +9,7 @@ import time
 class Kuka:
 
   def __init__(self, baseInitPos, jointInitPos, gripperInitOrn, \
-          maxForce=200., fingerAForce=6, fingerBForce=5.5, fingerTipForce=6, \
+          maxForce=200., maxVelocity=10., fingerAForce=6, fingerBForce=5.5, fingerTipForce=6, \
           urdfRootPath=pybullet_data.getDataPath(), timeStep=0.01): 
     self.urdfRootPath = urdfRootPath
     self.timeStep = timeStep
@@ -21,7 +17,8 @@ class Kuka:
     self.jointInitPos = jointInitPos
     self.gripperInitOrn = gripperInitOrn
     
-    self.maxForce = 200.
+    self.maxForce = maxForce
+    self.maxVelocity = maxVelocity
     self.fingerAForce = fingerAForce
     self.fingerBForce = fingerBForce
     self.fingerTipForce = fingerTipForce
@@ -327,7 +324,8 @@ class Kuka:
         break
       for action in range (len(motorCommands)):
         motor = self.motorIndices[action]
-        p.setJointMotorControl2(self.kukaUid,motor,p.POSITION_CONTROL,targetPosition=targetPos[action],force=self.maxForce)
+        p.setJointMotorControl2(self.kukaUid,motor,p.POSITION_CONTROL,targetPosition=targetPos[action],\
+                force=self.maxForce,maxVelocity=self.maxVelocity)
       p.stepSimulation()
       if renders:
         time.sleep(self.timeStep)
