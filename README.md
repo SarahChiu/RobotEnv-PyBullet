@@ -1,4 +1,4 @@
-# Robotics\_Env\_in\_PyBullet
+# Robotic Environments in PyBullet
 
 This is a github project containing multiple simulation environments for robotics. These environments can be used to test different reinforcement learning algorithms.  
 The environments are modified from the examples provided in **Bullet Physics SDK** (see [here](https://github.com/bulletphysics/bullet3/tree/master/examples/pybullet/gym/pybullet_envs/examples) for more examples).
@@ -26,10 +26,11 @@ cd Robotics_Env_in_PyBullet/src
 pip install -e .
 ```
 
-3. Add the path of the installed package to *PYTHONPATH*.
+3. Add the following lines to your bashrc.
 
 ```bash
-export PYTHONPATH=/your_path_to_this_project/src
+export PYTHONPATH=$PYTHONPATH:your_path_to_this_project/src
+export URDF_DATA=your_path_to_this_project/src/data
 ```
 
 ### Usage
